@@ -12,8 +12,22 @@ async function request(path, { token, ...options } = {}) {
       ...options.headers,
     },
   });
-  const payload = response.status === 204 ? null : await response.json();
-  if (!response.ok) throw new Error(payload?.error || 'The request could not be completed.');
+  const responseBody = response.status === 204 ? '' : await response.text();
+  let payload = null;
+
+  if (responseBody.trim()) {
+    try {
+      payload = JSON.parse(responseBody);
+    } catch {
+      throw new Error(`API returned a non-JSON response (HTTP ${response.status}). Check the API URL and backend logs.`);
+    }
+  }
+
+  if (response.ok && response.status !== 204 && payload === null) {
+    throw new Error(`API returned an empty response (HTTP ${response.status}). Check the backend logs.`);
+  }
+
+  if (!response.ok) throw new Error(payload?.error || `API request failed (HTTP ${response.status}).`);
   return payload;
 }
 
