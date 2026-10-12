@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
+const API_URL = (import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://127.0.0.1:3000' : '')).replace(/\/$/, '');
 const money = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' });
 
 async function request(path, { token, ...options } = {}) {
+  if (!API_URL) {
+    throw new Error('API URL is not configured. Set VITE_API_URL to the deployed backend origin in Vercel, then redeploy.');
+  }
+
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
